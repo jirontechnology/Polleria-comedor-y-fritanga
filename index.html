@@ -1,0 +1,1453 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Sabor & Pollo POS - PWA</title>
+    
+    <!-- Soporte PWA, Meta Tags e Iconos -->
+    <meta name="theme-color" content="#d32f2f">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="SaborPollo">
+    
+    <!-- Manifiesto de Aplicación Web Web (PWA) embebido mediante Data URI -->
+    <link rel="manifest" href="data:application/json;base64,ewogICJuYW1lIjogIlNhYm9yICYgUG9sbG8gUE9TIiwKICAic2hvcnRfbmFtZSI6ICJTYWJvclBvbGxvUE9TIiwKICAic3RhcnRfdXJsIjogIi4vaW5kZXhfdjYuaHRtbCIsCiAgImRpc3BsYXkiOiAic3RhbmRhbG9uZSIsCiAgImJhY2tncm91bmRfY29sb3IiOiAiI2Y0ZjZmOSIsCiAgInRoZW1lX2NvbG9yIjogIiNkMzJmMmYiLAogICJpY29ucyI6IFsKICAgIHsKICAgICAgInNyYyI6ICJkYXRhOmltYWdlL3N2Zyt4bWw7YmFzZTY0LFBITjRkeUI0YldGeWMyVnlJQ0p6ZDJjeVpYSnpaVzVuSWlBOUlDOW9jbVZsZkdsdFlXZGxMbk4yWnlJZ1BITjRZM0psWVhSMFl3bDhJSDA4TDNOMmN5OTRaVzVuUkhJZ2N6b3hNekF3TUh3bE16QXdNSEI0SWpwN2MzUnliV1Z6SUhwd1pXNWZkRzlyWlc0aU9pQjdjM1I1Ym1WeUlIdHlaVzVrSWowaU9pQjdjM1I1Ym1WeUlIdHlaVzVrSWowaU9pQjdjM1I1Ym1WeUlIdHlaVzVrSWowaU9pQjdjM1I1Ym1WeUlIdHlaVzVrSWowaU8zUnlkVzVwSUhWMlpYSnpaVzVuSWowaU9pQjciLAogICAgICAic2l6ZXMiOiAiMTkyeDE5MiIsCiAgICAgICJ0eXBlIjogImltYWdlL3N2Zyt4bWwiLAogICAgICAicHVycG9zZSI6ICJhbnkgbWFza2FibGUiCiAgICB9CiAgXQp9">
+
+    <!-- Librería para escaneo de códigos de barra usando la cámara -->
+    <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
+    <style>
+        :root {
+            --primary: #d32f2f;
+            --primary-dark: #b71c1c;
+            --accent: #f57c00;
+            --bg: #f4f6f9;
+            --surface: #ffffff;
+            --text: #212121;
+            --text-muted: #555555;
+            --border: #b0bec5;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            background-color: var(--bg);
+            color: var(--text);
+            line-height: 1.4;
+            padding-bottom: 90px;
+        }
+
+        header {
+            background-color: var(--primary);
+            color: white;
+            padding: 15px;
+            text-align: center;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+
+        header h1 {
+            font-size: 1.3rem;
+            font-weight: bold;
+            letter-spacing: 0.5px;
+        }
+
+        .header-logo {
+            max-height: 40px;
+            max-width: 40px;
+            object-fit: contain;
+            border-radius: 4px;
+            background: white;
+            padding: 2px;
+            display: none;
+        }
+
+        .container {
+            padding: 12px;
+            max-width: 650px;
+            margin: 0 auto;
+        }
+
+        .tabs {
+            display: table;
+            width: 100%;
+            background: var(--surface);
+            margin-bottom: 15px;
+            border-radius: 8px;
+            padding: 4px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.08);
+            border: 1px solid var(--border);
+        }
+
+        .tab-btn {
+            display: table-cell;
+            width: 20%;
+            border: none;
+            background: none;
+            padding: 12px 2px;
+            font-size: 0.8rem;
+            font-weight: bold;
+            color: var(--text-muted);
+            text-align: center;
+            cursor: pointer;
+            border-radius: 6px;
+        }
+
+        .tab-btn.active {
+            background-color: var(--primary);
+            color: white;
+        }
+
+        .section {
+            display: none;
+        }
+
+        .section.active {
+            display: block;
+        }
+
+        .panel {
+            background: #fff;
+            padding: 14px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            border: 1px solid var(--border);
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+        }
+
+        .panel-title {
+            font-size: 1.05rem;
+            font-weight: bold;
+            color: #000;
+            margin-bottom: 12px;
+            border-bottom: 2px solid #eceff1;
+            padding-bottom: 4px;
+        }
+
+        .form-group {
+            margin-bottom: 12px;
+        }
+
+        .form-group label {
+            display: block;
+            font-size: 0.85rem;
+            font-weight: bold;
+            margin-bottom: 4px;
+            color: #37474f;
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            font-size: 1rem;
+            color: #000;
+            outline: none;
+        }
+
+        .form-control:focus {
+            border-color: var(--primary);
+        }
+
+        .btn-inline {
+            background-color: var(--primary);
+            color: white;
+            border: none;
+            padding: 10px 14px;
+            border-radius: 6px;
+            font-weight: bold;
+            cursor: pointer;
+            font-size: 0.9rem;
+        }
+
+        .radio-group {
+            display: flex;
+            gap: 10px;
+        }
+
+        .radio-label {
+            flex: 1;
+            background: #f8f9fa;
+            border: 2px solid #cfd8dc;
+            padding: 8px;
+            border-radius: 6px;
+            text-align: center;
+            font-size: 0.85rem;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        .radio-input {
+            display: none;
+        }
+
+        .radio-input:checked + .radio-label {
+            border-color: var(--primary);
+            background-color: #ffebee;
+            color: var(--primary-dark);
+        }
+
+        .search-container {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 15px;
+        }
+
+        .search-box {
+            flex: 1;
+            padding: 14px;
+            border: 2px solid var(--border);
+            border-radius: 8px;
+            font-size: 1.1rem;
+            outline: none;
+            color: #000;
+            font-weight: 500;
+            background: white;
+        }
+
+        .btn-scan-trigger {
+            background-color: var(--accent);
+            color: white;
+            border: none;
+            padding: 0 15px;
+            border-radius: 8px;
+            font-size: 1.4rem;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        #scanner-wrapper {
+            display: none;
+            background: #fff;
+            border: 2px solid var(--primary);
+            border-radius: 8px;
+            padding: 10px;
+            margin-bottom: 15px;
+        }
+
+        #reader {
+            width: 100%;
+            background: #000;
+        }
+
+        .btn-close-scanner {
+            width: 100%;
+            background: #555;
+            color: white;
+            border: none;
+            padding: 8px;
+            margin-top: 8px;
+            border-radius: 4px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        .product-card {
+            background: var(--surface);
+            border-radius: 8px;
+            padding: 14px;
+            margin-bottom: 12px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+            border: 1px solid #cfd8dc;
+            border-left: 5px solid var(--accent);
+        }
+
+        .product-meta {
+            display: table;
+            width: 100%;
+            margin-bottom: 8px;
+        }
+
+        .product-info h3 {
+            font-size: 1.15rem;
+            font-weight: bold;
+            color: #000;
+        }
+
+        .product-info p {
+            font-size: 1rem;
+            color: #37474f;
+            font-weight: 600;
+            margin-top: 2px;
+        }
+
+        .sku-tag {
+            display: inline-block;
+            background: #eceff1;
+            color: #455a64;
+            font-size: 0.75rem;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-family: monospace;
+            margin-top: 4px;
+        }
+
+        .control-row {
+            display: flex;
+            justify-content: flex-end;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .qty-btn {
+            width: 46px;
+            height: 46px;
+            border-radius: 6px;
+            border: 2px solid #78909c;
+            background: #cfd8dc;
+            font-size: 1.7rem;
+            font-weight: bold;
+            color: #000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+        }
+
+        .qty-input {
+            width: 85px;
+            height: 46px;
+            text-align: center;
+            border: 2px solid #78909c;
+            border-radius: 6px;
+            font-size: 1.25rem;
+            font-weight: bold;
+            color: #000;
+        }
+
+        .inv-table {
+            width: 100%;
+            border-collapse: collapse;
+            background: var(--surface);
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+            font-size: 0.85rem;
+            border: 1px solid var(--border);
+            margin-bottom: 10px;
+        }
+
+        .inv-table th, .inv-table td {
+            padding: 10px 6px;
+            text-align: left;
+            border-bottom: 1px solid #cfd8dc;
+            color: #000;
+        }
+
+        .inv-table th {
+            background-color: #cfd8dc;
+            font-weight: bold;
+        }
+
+        .badge {
+            padding: 4px 6px;
+            border-radius: 4px;
+            font-weight: bold;
+            font-size: 0.75rem;
+        }
+
+        .badge-low { background-color: #ffebee; color: #c62828; }
+        .badge-ok { background-color: #e8f5e9; color: #2e7d32; }
+
+        .btn-action-table {
+            border: none;
+            padding: 4px 8px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 0.75rem;
+            color: white;
+            margin-right: 2px;
+        }
+        .btn-edit-inv { background-color: #0288d1; }
+        .btn-del-inv { background-color: #d32f2f; }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.6);
+            z-index: 200;
+            justify-content: center;
+            align-items: center;
+            padding: 10px;
+        }
+
+        .modal-content {
+            background: white;
+            border-radius: 12px;
+            width: 100%;
+            max-width: 440px;
+            padding: 18px;
+            max-height: 95vh;
+            display: flex;
+            flex-direction: column;
+            border: 1px solid #999;
+        }
+
+        .ticket-preview-wrapper {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            background: #ffffff;
+            border: 2px dashed #333;
+            padding: 12px;
+            flex: 1;
+            margin-bottom: 15px;
+            overflow-y: auto;
+        }
+
+        .ticket-logo-preview {
+            max-height: 60px;
+            object-fit: contain;
+            margin-bottom: 10px;
+            display: none;
+        }
+
+        .ticket-preview {
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 0.9rem;
+            font-weight: bold;
+            white-space: pre;
+            overflow-x: auto;
+            width: 100%;
+            color: #000;
+            line-height: 1.2;
+        }
+
+        .action-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+            margin-bottom: 10px;
+        }
+
+        .btn-action {
+            padding: 12px;
+            border: none;
+            border-radius: 6px;
+            font-weight: bold;
+            font-size: 0.9rem;
+            color: white;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .btn-block {
+            width: 100%;
+            padding: 14px;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 1.1rem;
+            font-weight: bold;
+            cursor: pointer;
+            margin-bottom: 8px;
+        }
+
+        .cart-bar {
+            position: fixed;
+            bottom: 0; left: 0; right: 0;
+            background: #ffffff;
+            border-top: 3px solid var(--primary);
+            padding: 14px 16px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 -3px 10px rgba(0,0,0,0.15);
+            max-width: 650px;
+            margin: 0 auto;
+            z-index: 90;
+        }
+
+        .cart-total {
+            font-size: 1.3rem;
+            font-weight: 900;
+            color: #000;
+        }
+
+        .cart-total span { color: var(--primary); }
+
+        .btn-pay {
+            background-color: #2e7d32;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-weight: bold;
+            font-size: 1.1rem;
+            cursor: pointer;
+        }
+
+        footer {
+            text-align: center;
+            padding: 15px;
+            font-size: 0.85rem;
+            color: #555;
+            font-weight: bold;
+            margin-top: 25px;
+            border-top: 1px solid #cfd8dc;
+        }
+
+        /* Estilos Historial */
+        .history-card {
+            background: #fafafa;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            padding: 10px;
+            margin-bottom: 8px;
+            font-size: 0.85rem;
+        }
+        .history-meta {
+            display: flex;
+            justify-content: space-between;
+            font-weight: bold;
+            border-bottom: 1px dashed #ccc;
+            padding-bottom: 4px;
+            margin-bottom: 4px;
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <img id="app-logo" class="header-logo" src="" alt="Logo">
+        <h1 id="header-title">Sabor & Pollo POS 🚀</h1>
+    </header>
+
+    <div class="container">
+        <!-- Panel de Configuración de Impresión Universal -->
+        <div class="config-panel" style="background:#fff; padding:12px; border-radius:8px; margin-bottom:15px; border:1px solid var(--border);">
+            <div class="radio-group">
+                <input type="radio" id="w58" name="ticket-width" value="58" checked onchange="updateTicketWidth()">
+                <label class="radio-label" for="w58">📟 58 mm</label>
+
+                <input type="radio" id="w80" name="ticket-width" value="80" onchange="updateTicketWidth()">
+                <label class="radio-label" for="w80">🖨️ 80 mm</label>
+
+                <input type="radio" id="wDigital" name="ticket-width" value="digital" onchange="updateTicketWidth()">
+                <label class="radio-label" for="wDigital">📱 Digital</label>
+            </div>
+        </div>
+
+        <div class="tabs">
+            <div class="tab-btn active" id="btn-tab-ventas" onclick="switchTab('ventas')">🛒 Ventas</div>
+            <div class="tab-btn" id="btn-tab-inventario" onclick="switchTab('inventario')">📦 Inv.</div>
+            <div class="tab-btn" id="btn-tab-menu" onclick="switchTab('menu')">📋 Menú</div>
+            <div class="tab-btn" id="btn-tab-historial" onclick="switchTab('historial')">📊 Historial</div>
+            <div class="tab-btn" id="btn-tab-ajustes" onclick="switchTab('ajustes')">⚙️ Ajustes</div>
+        </div>
+
+        <!-- SECCIÓN 1: VENTAS -->
+        <div id="sec-ventas" class="section active">
+            <div class="search-container">
+                <input type="text" class="search-box" id="search-input" placeholder="🔍 Buscar producto o SKU..." oninput="filterProducts()">
+                <button class="btn-scan-trigger" onclick="toggleScanner()">📷</button>
+            </div>
+
+            <div id="scanner-wrapper">
+                <div id="reader"></div>
+                <button class="btn-close-scanner" onclick="stopScanner()">Apagar Cámara</button>
+            </div>
+
+            <div id="products-list"></div>
+        </div>
+
+        <!-- SECCIÓN 2: INVENTARIO -->
+        <div id="sec-inventario" class="section">
+            <div class="panel" id="panel-crear-inv">
+                <div class="panel-title" id="inv-form-title">📦 Crear / Editar Ítem Base de Inventario</div>
+                <input type="hidden" id="edit-inv-key" value="">
+                
+                <div class="form-group">
+                    <label>Nombre de la Materia Prima / Ítem:</label>
+                    <input type="text" id="new-inv-name" class="form-control" placeholder="Ej: Carne de Cerdo">
+                </div>
+                <div style="display:flex; gap:8px; margin-bottom: 12px;">
+                    <div style="flex:1;">
+                        <label id="lbl-inv-inicial">Cantidad Inicial / Total:</label>
+                        <input type="number" id="new-inv-initial" class="form-control" value="0" step="any">
+                    </div>
+                    <div style="flex:1;">
+                        <label>Mínimo Alerta:</label>
+                        <input type="number" id="new-inv-min" class="form-control" value="10" step="any">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Unidad de Medida:</label>
+                    <select id="new-inv-unit" class="form-control">
+                        <option value="Lbs">Libras (Lbs)</option>
+                        <option value="Und">Unidades (Und)</option>
+                        <option value="Serv">Servicios (Serv)</option>
+                    </select>
+                </div>
+                <div style="display:flex; gap:8px;">
+                    <button class="btn-inline" style="flex:2; background-color:#2e7d32;" onclick="saveInventoryItem()">Guardar Ítem</button>
+                    <button class="btn-inline" id="btn-cancel-inv-edit" style="flex:1; background-color:#555; display:none;" onclick="cancelInventoryEdit()">Cancelar</button>
+                </div>
+            </div>
+
+            <div class="panel">
+                <div class="panel-title">➕ Acceso Rápido: Surtir Existencias</div>
+                <div style="display:flex; gap:8px; align-items:flex-end;">
+                    <div style="flex:2;">
+                        <label style="font-size:0.8rem; font-weight:bold;">Seleccionar Artículo:</label>
+                        <select id="inv-select-item" class="form-control"></select>
+                    </div>
+                    <div style="flex:1;">
+                        <label style="font-size:0.8rem; font-weight:bold;">Añadir Cant.:</label>
+                        <input type="number" id="inv-input-qty" class="form-control" value="0" step="any">
+                    </div>
+                    <button class="btn-inline" onclick="addStockItem()">Surtir</button>
+                </div>
+            </div>
+
+            <div class="panel">
+                <div class="panel-title">Listado de Inventario Actual</div>
+                <div style="overflow-x:auto;">
+                    <table class="inv-table">
+                        <thead>
+                            <tr>
+                               <th>Artículo</th>
+                               <th>Total/Inic.</th>
+                               <th>Vendido</th>
+                               <th>Actual</th>
+                               <th>Estado</th>
+                               <th>Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody id="inventory-list"></tbody>
+                    </table>
+                </div>
+                <button onclick="clearLocalStorageData()" style="width:100%; padding:8px; background:#b71c1c; color:white; border:none; border-radius:6px; font-weight:bold; font-size:0.85rem; cursor:pointer; margin-top:5px;">⚠️ Reiniciar Toda la Base de Datos</button>
+            </div>
+        </div>
+
+        <!-- SECCIÓN 3: EDITAR MENÚ Y PRECIOS -->
+        <div id="sec-menu" class="section">
+            <div class="panel">
+                <div class="panel-title">📝 Añadir / Editar Producto al Menú de Venta</div>
+                <div class="form-group">
+                    <label>Nombre del Plato / Producto:</label>
+                    <input type="text" id="menu-prod-name" class="form-control" placeholder="Ej: Pollo con Tajadas Grande">
+                </div>
+                <div style="display:flex; gap:8px; margin-bottom:12px;">
+                    <div style="flex:1;">
+                        <label>Precio (C$):</label>
+                        <input type="number" id="menu-prod-price" class="form-control" placeholder="0.00" step="0.01">
+                    </div>
+                    <div style="flex:1;">
+                        <label>Código SKU / Barras:</label>
+                        <input type="text" id="menu-prod-sku" class="form-control" placeholder="Escribe o escanea">
+                    </div>
+                </div>
+                <div style="display:flex; gap:8px; margin-bottom:12px;">
+                    <div style="flex:1;">
+                        <label>Categoría:</label>
+                        <select id="menu-prod-cat" class="form-control">
+                            <option value="Fritanga">Fritanga</option>
+                            <option value="Pollería">Pollería</option>
+                            <option value="Bebidas">Bebidas</option>
+                            <option value="Otros">Otros</option>
+                        </select>
+                    </div>
+                    <div style="flex:1;">
+                        <label>Descuenta de:</label>
+                        <select id="menu-prod-link" class="form-control"></select>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label style="display:inline-flex; align-items:center; gap:5px; cursor:pointer;">
+                        <input type="checkbox" id="menu-prod-weight" style="width:18px; height:18px;"> ¿Se vende fraccionado por Peso? (Lbs)
+                    </label>
+                </div>
+                <button class="btn-inline" style="width:100%; background-color:#2e7d32;" onclick="saveProductToMenu()">Guardar Producto en Menú</button>
+            </div>
+
+            <div class="panel" style="background:#fff3e0; border-left:4px solid var(--accent);">
+                <h3 style="color:var(--accent); font-size:1.05rem; margin-bottom:5px;">Sugerencia del Día Automática:</h3>
+                <p id="menu-hoy" style="font-weight:bold; font-size:1.1rem; color:#000;"></p>
+            </div>
+        </div>
+
+        <!-- SECCIÓN 4: HISTORIAL DE VENTAS DEL DIA -->
+        <div id="sec-historial" class="section">
+            <div class="panel" style="background: #e8f5e9; border-left: 5px solid #2e7d32;">
+                <div class="panel-title" style="color: #1b5e20; border-bottom-color: #c8e6c9;">📈 Resumen de Caja de Hoy</div>
+                <div style="display: flex; justify-content: space-between; font-size: 1.1rem; font-weight: bold;">
+                    <span>Tickets Emitidos: <span id="hist-total-tickets" style="color:#2e7d32;">0</span></span>
+                    <span>Total del Día: <span id="hist-total-dinero" style="color:#2e7d32;">C$0.00</span></span>
+                </div>
+            </div>
+            <div class="panel">
+                <div class="panel-title">📋 Desglose de Ventas</div>
+                <div id="history-container" style="max-height: 400px; overflow-y: auto;">
+                    <!-- Se rellena dinámicamente -->
+                </div>
+            </div>
+        </div>
+
+        <!-- SECCIÓN 5: AJUSTES -->
+        <div id="sec-ajustes" class="section">
+            <div class="panel">
+                <div class="panel-title">🖼️ Logotipo del Negocio</div>
+                <div class="form-group">
+                    <label>Seleccionar Imagen del Logo:</label>
+                    <input type="file" id="config-biz-logo" class="form-control" accept="image/*" onchange="handleLogoUpload(this)">
+                </div>
+                <div style="text-align: center; margin-top: 10px;">
+                    <img id="logo-preview-setting" src="" alt="Vista previa" style="max-height: 100px; max-width: 100px; object-fit: contain; display: none; border: 1px solid var(--border); padding: 4px; border-radius: 4px; background: white;">
+                    <button id="btn-remove-logo" class="btn-inline" style="background-color: #555; display: none; margin: 10px auto 0;" onclick="removeLogo()">Quitar Logotipo</button>
+                </div>
+            </div>
+
+            <div class="panel">
+                <div class="panel-title">🏢 Datos de Encabezado para la Factura</div>
+                <div class="form-group">
+                    <label>Nombre del Negocio:</label>
+                    <input type="text" id="config-biz-name" class="form-control" value="FRITANGA & POLLERÍA EL BUEN SABOR">
+                </div>
+                <div class="form-group">
+                    <label>Dirección:</label>
+                    <input type="text" id="config-biz-dir" class="form-control" value="De la Shell 1c. al Norte, Somotillo">
+                </div>
+                <div class="form-group">
+                    <label>Teléfono:</label>
+                    <input type="text" id="config-biz-tel" class="form-control" value="+505 8888-8888">
+                </div>
+                <button class="btn-inline" style="width:100%; background-color:var(--primary);" onclick="saveBusinessConfig()">💾 Guardar Ajustes de Encabezado</button>
+            </div>
+        </div>
+
+        <footer id="footer-credits">
+            creado By: Jiron Technology, Somotillo
+        </footer>
+    </div>
+
+    <!-- Barra Fija Inferior -->
+    <div class="cart-bar" id="cart-bar">
+        <div class="cart-total">Total: <span id="total-val">C$0.00</span></div>
+        <button class="btn-pay" onclick="openCheckout()">Cobrar</button>
+    </div>
+
+    <!-- Modal de Facturación -->
+    <div class="modal" id="ticket-modal">
+        <div class="modal-content">
+            <h3 style="margin-bottom: 10px; color:#000; font-size:1.1rem; display:flex; justify-content:space-between;">
+                <span>📄 Factura N°: <span id="lbl-secuencia" style="color:var(--primary);">00001</span></span>
+                <span id="lbl-tipo-ancho" style="font-size:0.85rem; background:#eceff1; padding:2px 6px; border-radius:4px;">58mm</span>
+            </h3>
+            
+            <div class="ticket-preview-wrapper">
+                <img id="ticket-logo" class="ticket-logo-preview" src="" alt="Logo Ticket">
+                <div class="ticket-preview" id="ticket-text"></div>
+            </div>
+            
+            <div class="action-grid">
+                <button class="btn-action" style="background-color: #25D366;" onclick="sendWhatsApp()">💬 WhatsApp</button>
+                <button class="btn-action" style="background-color: #007bff;" onclick="sendEmail()">✉️ Correo</button>
+            </div>
+            
+            <button class="btn-block" style="background-color: #0288d1;" onclick="shareTextTicket()">⚡ Transmitir a Miniprinter (RawBT)</button>
+            <button class="btn-block" style="background-color: #2e7d32;" onclick="processSale()">💾 Registrar Venta y Siguiente</button>
+            <button class="btn-block" style="background:#555;" onclick="closeModal()">Regresar</button>
+        </div>
+    </div>
+
+    <script>
+        const productosPorDefecto = [
+            { id: 'P01', sku: '74110011', nombre: 'Servicio de Carne Asada', cat: 'Fritanga', precio: 120.00, porPeso: false, itemInv: 'INV02' },
+            { id: 'P02', sku: '74110022', nombre: 'Pollo Frito con Tajadas', cat: 'Fritanga', precio: 90.00, porPeso: false, itemInv: 'INV01' },
+            { id: 'P03', sku: '74110033', nombre: 'Pollo Crudo (Pechuga)', cat: 'Pollería', precio: 45.00, porPeso: true, itemInv: 'INV01' },
+            { id: 'P04', sku: '74110044', nombre: 'Pollo Crudo (Alitas)', cat: 'Pollería', precio: 38.00, porPeso: true, itemInv: 'INV01' },
+            { id: 'P05', sku: '74110055', nombre: 'Gaseosa 12 oz', cat: 'Bebidas', precio: 25.00, porPeso: false, itemInv: 'INV03' }
+        ];
+
+        const inventarioPorDefecto = {
+            'INV01': { nombre: 'Pollo Crudo', inicial: 100.00, vendido: 0.00, minimo: 20.00, unidad: 'Lbs' },
+            'INV02': { nombre: 'Res/Cerdo', inicial: 50.00, vendido: 0.00, minimo: 10.00, unidad: 'Lbs' },
+            'INV03': { nombre: 'Gaseosas', inicial: 60.00, vendido: 0.00, minimo: 15.00, unidad: 'Und' }
+        };
+
+        const empresaPorDefecto = {
+            nombre: 'FRITANGA & POLLERÍA "EL BUEN SABOR"',
+            direccion: 'De la Shell 1c. al Norte, Somotillo',
+            telefono: '+505 8888-8888',
+            logo: ''
+        };
+
+        const menuRotativo = {
+            0: "Domingo: Nacatamales / Pollo al Horno",
+            1: "Lunes: Pollo en salsa / Cerdo entomatado",
+            2: "Martes: Carne desmenuzada / Sopa de frijoles",
+            3: "Miércoles: Bistec encebollado / Cerdo frito",
+            4: "Jueves: Pollo frito / Salpicón",
+            5: "Viernes: Pescado frito / Asados variados",
+            6: "Sábado: Sopa de Res o Gallina"
+        };
+
+        let productosBase = JSON.parse(localStorage.getItem('jiron_pos_productos')) || productosPorDefecto;
+        let inventario = JSON.parse(localStorage.getItem('jiron_pos_inventario')) || inventarioPorDefecto;
+        let infoEmpresa = JSON.parse(localStorage.getItem('jiron_pos_empresa')) || empresaPorDefecto;
+        let ticketCorrelativo = parseInt(localStorage.getItem('jiron_pos_secuencia')) || 1;
+        let historialVentas = JSON.parse(localStorage.getItem('jiron_pos_historial')) || [];
+        
+        let carrito = {};
+        let html5QrcodeScanner = null;
+
+        function saveToLocalStorage() {
+            localStorage.setItem('jiron_pos_productos', JSON.stringify(productosBase));
+            localStorage.setItem('jiron_pos_inventario', JSON.stringify(inventario));
+            localStorage.setItem('jiron_pos_empresa', JSON.stringify(infoEmpresa));
+            localStorage.setItem('jiron_pos_secuencia', ticketCorrelativo.toString());
+            localStorage.setItem('jiron_pos_historial', JSON.stringify(historialVentas));
+        }
+
+        function clearLocalStorageData() {
+            if(confirm("¿Seguro que deseas restaurar todos los valores de fábrica y limpiar las bases de datos locales?")) {
+                localStorage.clear();
+                productosBase = [...productosPorDefecto];
+                inventario = JSON.parse(JSON.stringify(inventarioPorDefecto));
+                infoEmpresa = JSON.parse(JSON.stringify(empresaPorDefecto));
+                ticketCorrelativo = 1;
+                historialVentas = [];
+                saveToLocalStorage();
+                location.reload();
+            }
+        }
+
+        function formatNumber(num) {
+            return new Intl.NumberFormat('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(num);
+        }
+
+        function switchTab(tabId) {
+            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+            document.querySelectorAll('.section').forEach(sec => sec.classList.remove('active'));
+            
+            document.getElementById('btn-tab-' + tabId).classList.add('active');
+            document.getElementById('sec-' + tabId).classList.add('active');
+
+            if(tabId === 'ventas') renderProductos();
+            if(tabId === 'inventario') {
+                renderInventario();
+                populateDropdowns();
+                cancelInventoryEdit();
+            }
+            if(tabId === 'menu') {
+                populateDropdowns();
+            }
+            if(tabId === 'historial') {
+                renderHistorial();
+            }
+        }
+
+        function renderProductos(filter = "") {
+            const container = document.getElementById('products-list');
+            container.innerHTML = "";
+            
+            productosBase.forEach(p => {
+                if(filter && !p.nombre.toLowerCase().includes(filter.toLowerCase()) && !p.sku.includes(filter)) return;
+
+                const qty = carrito[p.id] || 0;
+                const step = p.porPeso ? 0.5 : 1;
+
+                const card = document.createElement('div');
+                card.className = 'product-card';
+                card.innerHTML = `
+                    <div class="product-meta">
+                        <div class="product-info">
+                            <h3>${p.nombre}</h3>
+                            <p>${p.cat} • C$${formatNumber(p.precio)} / ${p.porPeso ? 'Lb' : 'Serv/Und'}</p>
+                            <span class="sku-tag">SKU: ${p.sku}</span>
+                        </div>
+                    </div>
+                    <div class="control-row">
+                        <button type="button" class="qty-btn" onclick="modifyQty('${p.id}', -${step})">−</button>
+                        <input type="number" class="qty-input" id="input-${p.id}" value="${qty}" step="${step}" min="0" onchange="manualInputQty('${p.id}', this.value, ${p.porPeso})">
+                        <button type="button" class="qty-btn" onclick="modifyQty('${p.id}', ${step})">+</button>
+                    </div>
+                `;
+                container.appendChild(card);
+            });
+        }
+
+        function filterProducts() {
+            renderProductos(document.getElementById('search-input').value);
+        }
+
+        function modifyQty(id, change) {
+            const p = productosBase.find(prod => prod.id === id);
+            let current = carrito[id] || 0;
+            current += change;
+            if(current < 0) current = 0;
+            
+            current = p.porPeso ? Math.round(current * 100) / 100 : Math.round(current);
+            
+            if(current <= 0) {
+                delete carrito[id];
+                if(document.getElementById('input-' + id)) document.getElementById('input-' + id).value = 0;
+            } else {
+                carrito[id] = current;
+                if(document.getElementById('input-' + id)) document.getElementById('input-' + id).value = current;
+            }
+            updateCartBar();
+        }
+
+        function manualInputQty(id, value, porPeso) {
+            let val = parseFloat(value) || 0;
+            if(val <= 0) {
+                delete carrito[id];
+                document.getElementById('input-' + id).value = 0;
+            } else {
+                carrito[id] = porPeso ? Math.round(val * 100) / 100 : Math.round(val);
+                document.getElementById('input-' + id).value = carrito[id];
+            }
+            updateCartBar();
+        }
+
+        function updateCartBar() {
+            let total = 0;
+            for (let id in carrito) {
+                const p = productosBase.find(prod => prod.id === id);
+                if(p) total += p.precio * carrito[id];
+            }
+            document.getElementById('total-val').innerText = `C$${formatNumber(total)}`;
+        }
+
+        function renderInventario() {
+            const tbody = document.getElementById('inventory-list');
+            tbody.innerHTML = "";
+            for(let key in inventario) {
+                const item = inventario[key];
+                const actual = item.inicial - item.vendido;
+                const estado = actual <= item.minimo ? '<span class="badge badge-low">Bajo</span>' : '<span class="badge badge-ok">OK</span>';
+                const unidadMedida = item.unidad || 'Und';
+                
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td><b>${item.nombre} (${unidadMedida})</b></td>
+                    <td>${formatNumber(item.inicial)}</td>
+                    <td>${formatNumber(item.vendido)}</td>
+                    <td><b>${formatNumber(actual)}</b></td>
+                    <td>${estado}</td>
+                    <td>
+                        <button class="btn-action-table btn-edit-inv" onclick="editInventoryItem('${key}')">✏️</button>
+                        <button class="btn-action-table btn-del-inv" onclick="deleteInventoryItem('${key}')">🗑️</button>
+                    </td>
+                `;
+                tbody.appendChild(row);
+            }
+        }
+
+        function populateDropdowns() {
+            const selectItem = document.getElementById('inv-select-item');
+            const selectLink = document.getElementById('menu-prod-link');
+            
+            selectItem.innerHTML = "";
+            selectLink.innerHTML = '<option value="">-- Ninguno (No descuenta stock) --</option>';
+
+            for(let key in inventario) {
+                const opt = document.createElement('option');
+                opt.value = key;
+                opt.innerText = `${inventario[key].nombre} (${inventario[key].unidad || 'Und'})`;
+                selectItem.appendChild(opt);
+
+                const opt2 = document.createElement('option');
+                opt2.value = key;
+                opt2.innerText = `${inventario[key].nombre} (${inventario[key].unidad || 'Und'})`;
+                selectLink.appendChild(opt2);
+            }
+        }
+
+        function addStockItem() {
+            const key = document.getElementById('inv-select-item').value;
+            const qty = parseFloat(document.getElementById('inv-input-qty').value) || 0;
+            if(qty <= 0) {
+                alert("Ingrese una cantidad válida mayor a cero.");
+                return;
+            }
+            if(inventario[key]) {
+                inventario[key].inicial += qty;
+                saveToLocalStorage();
+                renderInventario();
+                document.getElementById('inv-input-qty').value = "0";
+                alert("¡Existencias añadidas con éxito!");
+            }
+        }
+
+        function editInventoryItem(key) {
+            const item = inventario[key];
+            if(!item) return;
+
+            document.getElementById('edit-inv-key').value = key;
+            document.getElementById('new-inv-name').value = item.nombre;
+            document.getElementById('new-inv-initial').value = item.inicial;
+            document.getElementById('new-inv-min').value = item.minimo;
+            document.getElementById('new-inv-unit').value = item.unidad || 'Und';
+
+            document.getElementById('inv-form-title').innerText = "✏️ Editar Ítem de Inventario Base";
+            document.getElementById('lbl-inv-inicial').innerText = "Cantidad Total Seteada:";
+            document.getElementById('btn-cancel-inv-edit').style.display = "inline-block";
+            
+            // Hacer scroll suave hacia el formulario
+            document.getElementById('panel-crear-inv').scrollIntoView({ behavior: 'smooth' });
+        }
+
+        function cancelInventoryEdit() {
+            document.getElementById('edit-inv-key').value = "";
+            document.getElementById('new-inv-name').value = "";
+            document.getElementById('new-inv-initial').value = "0";
+            document.getElementById('new-inv-min').value = "10";
+            document.getElementById('new-inv-unit').value = "Lbs";
+
+            document.getElementById('inv-form-title').innerText = "📦 Crear / Editar Ítem Base de Inventario";
+            document.getElementById('lbl-inv-inicial').innerText = "Cantidad Inicial / Total:";
+            document.getElementById('btn-cancel-inv-edit').style.display = "none";
+        }
+
+        function deleteInventoryItem(key) {
+            const item = inventario[key];
+            if(!item) return;
+
+            if(confirm(`¿Estás seguro de que deseas eliminar "${item.nombre}" del inventario?\n\nNota: Los productos del menú vinculados a este ítem dejarán de descontar stock.`)) {
+                // Desvincular productos del menú que apuntaban aquí
+                productosBase.forEach(p => {
+                    if(p.itemInv === key) p.itemInv = null;
+                });
+                
+                delete inventario[key];
+                saveToLocalStorage();
+                renderInventario();
+                populateDropdowns();
+                cancelInventoryEdit();
+                alert("Ítem eliminado correctamente.");
+            }
+        }
+
+        function saveInventoryItem() {
+            const key = document.getElementById('edit-inv-key').value;
+            const name = document.getElementById('new-inv-name').value.trim();
+            const initial = parseFloat(document.getElementById('new-inv-initial').value) || 0;
+            const min = parseFloat(document.getElementById('new-inv-min').value) || 0;
+            const unit = document.getElementById('new-inv-unit').value;
+
+            if(!name) {
+                alert("Por favor, ingrese el nombre del ítem.");
+                return;
+            }
+
+            if(key) {
+                // Editando existente
+                inventario[key].nombre = name;
+                inventario[key].inicial = initial;
+                inventario[key].minimo = min;
+                inventario[key].unidad = unit;
+                alert("Ítem de inventario actualizado.");
+            } else {
+                // Creando nuevo
+                const newKey = 'INV' + (Object.keys(inventario).length + 1).toString().padStart(2, '0');
+                inventario[newKey] = {
+                    nombre: name,
+                    inicial: initial,
+                    vendido: 0,
+                    minimo: min,
+                    unidad: unit
+                };
+                alert(`Ítem "${name}" creado exitosamente.`);
+            }
+
+            saveToLocalStorage();
+            renderInventario();
+            populateDropdowns();
+            cancelInventoryEdit();
+        }
+
+        function saveProductToMenu() {
+            const name = document.getElementById('menu-prod-name').value.trim();
+            const price = parseFloat(document.getElementById('menu-prod-price').value) || 0;
+            const sku = document.getElementById('menu-prod-sku').value.trim() || 'SKU-' + Math.floor(Math.random() * 100000);
+            const cat = document.getElementById('menu-prod-cat').value;
+            const link = document.getElementById('menu-prod-link').value;
+            const isWeight = document.getElementById('menu-prod-weight').checked;
+
+            if(!name || price <= 0) {
+                alert("Verifique que el nombre del producto y el precio sean válidos.");
+                return;
+            }
+
+            const prodExistente = productosBase.find(p => p.sku === sku);
+            if(prodExistente) {
+                prodExistente.nombre = name;
+                prodExistente.precio = price;
+                prodExistente.cat = cat;
+                prodExistente.itemInv = link || null;
+                prodExistente.porPeso = isWeight;
+                alert("Producto del menú actualizado exitosamente.");
+            } else {
+                const newId = 'P' + (productosBase.length + 1).toString().padStart(2, '0');
+                productosBase.push({
+                    id: newId,
+                    sku: sku,
+                    nombre: name,
+                    cat: cat,
+                    precio: price,
+                    porPeso: isWeight,
+                    itemInv: link || null
+                });
+                alert("Nuevo producto agregado al menú de ventas.");
+            }
+
+            saveToLocalStorage();
+            document.getElementById('menu-prod-name').value = "";
+            document.getElementById('menu-prod-price').value = "";
+            document.getElementById('menu-prod-sku').value = "";
+            document.getElementById('menu-prod-weight').checked = false;
+        }
+
+        function loadBusinessConfigInputs() {
+            document.getElementById('config-biz-name').value = infoEmpresa.nombre;
+            document.getElementById('config-biz-dir').value = infoEmpresa.direccion;
+            document.getElementById('config-biz-tel').value = infoEmpresa.telefono;
+            document.getElementById('header-title').innerText = infoEmpresa.nombre + " 🚀";
+            
+            if(infoEmpresa.logo) {
+                document.getElementById('app-logo').src = infoEmpresa.logo;
+                document.getElementById('app-logo').style.display = 'block';
+                document.getElementById('logo-preview-setting').src = infoEmpresa.logo;
+                document.getElementById('logo-preview-setting').style.display = 'inline-block';
+                document.getElementById('btn-remove-logo').style.display = 'block';
+                document.getElementById('ticket-logo').src = infoEmpresa.logo;
+                document.getElementById('ticket-logo').style.display = 'block';
+            } else {
+                document.getElementById('app-logo').style.display = 'none';
+                document.getElementById('logo-preview-setting').style.display = 'none';
+                document.getElementById('btn-remove-logo').style.display = 'none';
+                document.getElementById('ticket-logo').style.display = 'none';
+            }
+        }
+
+        function saveBusinessConfig() {
+            infoEmpresa.nombre = document.getElementById('config-biz-name').value.trim();
+            infoEmpresa.direccion = document.getElementById('config-biz-dir').value.trim();
+            infoEmpresa.telefono = document.getElementById('config-biz-tel').value.trim();
+            
+            saveToLocalStorage();
+            document.getElementById('header-title').innerText = infoEmpresa.nombre + " 🚀";
+            alert("Ajustes de la empresa guardados de forma persistente.");
+        }
+
+        function handleLogoUpload(input) {
+            const file = input.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const base64Image = e.target.result;
+                    infoEmpresa.logo = base64Image;
+                    saveToLocalStorage();
+                    loadBusinessConfigInputs();
+                    alert("¡Logotipo cargado y guardado correctamente!");
+                };
+                reader.readAsDataURL(file);
+            }
+        }
+
+        function removeLogo() {
+            if(confirm("¿Deseas remover el logotipo actual?")) {
+                infoEmpresa.logo = "";
+                document.getElementById('config-biz-logo').value = "";
+                saveToLocalStorage();
+                loadBusinessConfigInputs();
+            }
+        }
+
+        function toggleScanner() {
+            const wrapper = document.getElementById('scanner-wrapper');
+            if (wrapper.style.display === 'block') {
+                stopScanner();
+            } else {
+                wrapper.style.display = 'block';
+                startScanner();
+            }
+        }
+
+        function startScanner() {
+            html5QrcodeScanner = new Html5Qrcode("reader");
+            const config = { fps: 12, qrbox: { width: 260, height: 160 } };
+            
+            html5QrcodeScanner.start(
+                { facingMode: "environment" }, 
+                config,
+                (decodedText) => {
+                    document.getElementById('search-input').value = decodedText;
+                    
+                    if(document.getElementById('sec-ventas').classList.contains('active')) {
+                        filterProducts();
+                        const pFound = productosBase.find(p => p.sku === decodedText);
+                        if (pFound) {
+                            modifyQty(pFound.id, pFound.porPeso ? 0.5 : 1);
+                            if (navigator.vibrate) navigator.vibrate(100);
+                        }
+                    } else if (document.getElementById('sec-menu').classList.contains('active')) {
+                        document.getElementById('menu-prod-sku').value = decodedText;
+                        const pFound = productosBase.find(p => p.sku === decodedText);
+                        if(pFound) {
+                            document.getElementById('menu-prod-name').value = pFound.nombre;
+                            document.getElementById('menu-prod-price').value = pFound.precio;
+                            document.getElementById('menu-prod-cat').value = pFound.cat;
+                            document.getElementById('menu-prod-link').value = pFound.itemInv || "";
+                            document.getElementById('menu-prod-weight').checked = pFound.porPeso;
+                        }
+                    }
+                    stopScanner();
+                },
+                (err) => {}
+            ).catch(err => {
+                alert("La cámara no pudo iniciarse: " + err);
+                document.getElementById('scanner-wrapper').style.display = 'none';
+            });
+        }
+
+        function stopScanner() {
+            if (html5QrcodeScanner) {
+                html5QrcodeScanner.stop().then(() => {
+                    document.getElementById('scanner-wrapper').style.display = 'none';
+                }).catch(() => {
+                    document.getElementById('scanner-wrapper').style.display = 'none';
+                });
+            } else {
+                document.getElementById('scanner-wrapper').style.display = 'none';
+            }
+        }
+
+        function updateTicketWidth() {
+            if(Object.keys(carrito).length > 0) {
+                document.getElementById('ticket-text').textContent = generateTicketText();
+            }
+        }
+
+        function generateTicketText() {
+            const fecha = new Date().toLocaleDateString();
+            const hora = new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+            const mode = document.querySelector('input[name="ticket-width"]:checked').value;
+            const secuenciaStr = String(ticketCorrelativo).padStart(5, '0');
+            
+            document.getElementById('lbl-tipo-ancho').innerText = mode === 'digital' ? '📱 Digital' : '🖨️ ' + mode + 'mm';
+
+            let charsMax = 32; 
+            if (mode === '80') charsMax = 48;
+            if (mode === 'digital') charsMax = 40;
+
+            let sep1 = "=".repeat(charsMax) + "\n";
+            let sep2 = "-".repeat(charsMax) + "\n";
+
+            function centerText(str) {
+                if (str.length >= charsMax) return str.substring(0, charsMax) + "\n";
+                let spaces = Math.floor((charsMax - str.length) / 2);
+                return " ".repeat(spaces) + str + "\n";
+            }
+
+            let t = sep1;
+            t += centerText(infoEmpresa.nombre.toUpperCase());
+            t += centerText(infoEmpresa.direccion);
+            t += centerText("Tel: " + infoEmpresa.telefono);
+            t += sep1;
+            t += `Fecha: ${fecha}       Hora: ${hora}\n`;
+            t += `Factura N°: ${secuenciaStr}\n`;
+            t += sep2;
+            
+            let colCant = 6;
+            let colTot = 10;
+            let colDesc = charsMax - (colCant + colTot + 2);
+            
+            t += "CANT. ".padEnd(colCant) + "DESCRIPCIÓN".padEnd(colDesc) + " TOTAL".padStart(colTot) + "\n";
+            t += sep2;
+
+            let total = 0;
+            for (let id in carrito) {
+                const p = productosBase.find(prod => prod.id === id);
+                if(!p) continue;
+                const cant = carrito[id];
+                const sub = p.precio * cant;
+                total += sub;
+                
+                let desc = p.nombre.substring(0, colDesc);
+                let cantStr = cant.toString().padEnd(colCant);
+                let subStr = `C$${formatNumber(sub)}`.padStart(colTot);
+                t += `${cantStr}${desc.padEnd(colDesc)} ${subStr}\n`;
+            }
+
+            t += sep2;
+            t += "TOTAL A PAGAR:".padEnd(charsMax - colTot) + `C$${formatNumber(total)}`.padStart(colTot) + "\n";
+            t += sep1;
+            t += centerText("¡Gracias por su preferencia!");
+            t += sep2;
+            t += centerText("creado By: Jiron Technology, Somotillo");
+            t += sep1;
+            return t;
+        }
+
+        function openCheckout() {
+            if(Object.keys(carrito).length === 0) {
+                alert("Por favor, agrega productos al carrito antes de cobrar.");
+                return;
+            }
+            document.getElementById('lbl-secuencia').innerText = String(ticketCorrelativo).padStart(5, '0');
+            document.getElementById('ticket-text').textContent = generateTicketText();
+            document.getElementById('ticket-modal').style.display = 'flex';
+        }
+
+        function closeModal() {
+            document.getElementById('ticket-modal').style.display = 'none';
+        }
+
+        function shareTextTicket() {
+            const text = generateTicketText();
+            if (navigator.share) {
+                navigator.share({ text: text }).catch(console.error);
+            } else {
+                navigator.clipboard.writeText(text);
+                alert("¡Copiado! Pégalo en la aplicación RawBT o similar para imprimir.");
+            }
+        }
+
+        function sendWhatsApp() {
+            const text = encodeURIComponent(generateTicketText());
+            window.open(`https://api.whatsapp.com/send?text=${text}`, '_blank');
+        }
+
+        function sendEmail() {
+            const subject = encodeURIComponent(`Factura Electrónica N° ${String(ticketCorrelativo).padStart(5, '0')} - ${infoEmpresa.nombre}`);
+            const body = encodeURIComponent(generateTicketText());
+            window.open(`mailto:?subject=${subject}&body=${body}`, '_blank');
+        }
+
+        function processSale() {
+            let totalVenta = 0;
+            let itemsVendidos = [];
+
+            for (let id in carrito) {
+                const p = productosBase.find(prod => prod.id === id);
+                if(p) {
+                    if(p.itemInv && inventario[p.itemInv]) {
+                        inventario[p.itemInv].vendido += carrito[id];
+                    }
+                    totalVenta += p.precio * carrito[id];
+                    itemsVendidos.push({
+                        nombre: p.nombre,
+                        cant: carrito[id],
+                        subtotal: p.precio * carrito[id]
+                    });
+                }
+            }
+
+            // Registrar en el historial de hoy
+            const nuevaVenta = {
+                numFactura: String(ticketCorrelativo).padStart(5, '0'),
+                fecha: new Date().toLocaleDateString(),
+                hora: new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}),
+                total: totalVenta,
+                productos: itemsVendidos
+            };
+            historialVentas.unshift(nuevaVenta);
+
+            ticketCorrelativo++;
+            saveToLocalStorage(); 
+            carrito = {};
+            updateCartBar();
+            renderProductos();
+            closeModal();
+            alert("¡Venta procesada con éxito e inventario actualizado localmente!");
+        }
+
+        function renderHistorial() {
+            const container = document.getElementById('history-container');
+            const totalDineroLbl = document.getElementById('hist-total-dinero');
+            const totalTicketsLbl = document.getElementById('hist-total-tickets');
+            
+            container.innerHTML = "";
+            
+            const fechaHoy = new Date().toLocaleDateString();
+            const ventasHoy = historialVentas.filter(v => v.fecha === fechaHoy);
+            
+            let sumaTotal = 0;
+            totalTicketsLbl.innerText = ventasHoy.length;
+
+            if (ventasHoy.length === 0) {
+                container.innerHTML = "<p style='text-align:center; color:#555; padding:15px;'>No hay ventas registradas el día de hoy.</p>";
+                totalDineroLbl.innerText = "C$0.00";
+                return;
+            }
+
+            ventasHoy.forEach(venta => {
+                sumaTotal += venta.total;
+                const card = document.createElement('div');
+                card.className = 'history-card';
+                
+                let prodListHtml = "";
+                venta.productos.forEach(prod => {
+                    prodListHtml += `<div style="display:flex; justify-content:space-between; color:#333;">
+                        <span>• ${prod.cant}x ${prod.nombre}</span>
+                        <span>C$${formatNumber(prod.subtotal)}</span>
+                    </div>`;
+                });
+
+                card.innerHTML = `
+                    <div class="history-meta">
+                        <span>📄 Factura #${venta.numFactura} (${venta.hora})</span>
+                        <span style="color:var(--primary-dark); font-size:0.95rem;">C$${formatNumber(venta.total)}</span>
+                    </div>
+                    <div>${prodListHtml}</div>
+                `;
+                container.appendChild(card);
+            });
+
+            totalDineroLbl.innerText = `C$${formatNumber(sumaTotal)}`;
+        }
+
+        function initApp() {
+            const hoy = new Date().getDay();
+            document.getElementById('menu-hoy').innerText = menuRotativo[hoy];
+            loadBusinessConfigInputs();
+            renderProductos();
+            populateDropdowns();
+
+            if ('serviceWorker' in navigator) {
+                window.addEventListener('load', () => {
+                    const swCode = `
+                        const CACHE_NAME = 'sabor-pollo-pos-v2';
+                        const ASSETS = [ './', './index_v7.html' ];
+                        self.addEventListener('install', e => {
+                            e.waitUntil(caches.open(CACHE_NAME).then(c => c.addAll(ASSETS)));
+                        });
+                        self.addEventListener('fetch', e => {
+                            e.respondWith(caches.match(e.request).then(res => res || fetch(e.request)));
+                        });
+                    `;
+                    const blob = new Blob([swCode], { type: 'application/javascript' });
+                    const swUrl = URL.createObjectURL(blob);
+                    navigator.serviceWorker.register(swUrl).catch(err => console.log('SW no registrado', err));
+                });
+            }
+        }
+
+        initApp();
+    </script>
+</body>
+</html>
